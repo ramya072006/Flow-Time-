@@ -5,7 +5,6 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 
 import { config } from './config';
 import { connectDatabase } from './config/database';
@@ -61,26 +60,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting — stricter for auth endpoints, very lenient for general API during testing
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100,                  // 100 auth attempts per IP
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many auth attempts, please try again later' },
-});
-
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/forgot-password', authLimiter);
-
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5000,                 // 5000 requests per 15 min for testing
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many requests, please try again later' },
-}));
+// Rate limiting disabled for now
+// Re-enable before going to production
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
