@@ -61,12 +61,25 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+// Rate limiting — stricter for auth endpoints, lenient for general API
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 30,                   // 30 login/register attempts per IP
   standardHeaders: true,
   legacyHeaders: false,
+  message: { success: false, message: 'Too many auth attempts, please try again later' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,                 // generous limit for general API usage
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please try again later' },
 }));
 
 // Body parsing
