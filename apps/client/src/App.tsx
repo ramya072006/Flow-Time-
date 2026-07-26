@@ -29,13 +29,15 @@ const queryClient = new QueryClient({
 });
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isInitialized } = useAuthStore();
+  if (!isInitialized) return null; // wait for auth check
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isInitialized } = useAuthStore();
+  if (!isInitialized) return null; // wait for auth check
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
@@ -62,40 +64,68 @@ function SocketInitializer() {
   return null;
 }
 
+// Initializes auth on every page load/refresh
+function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const { initialize, isInitialized } = useAuthStore();
+
+  useEffect(() => {
+    initialize();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center animate-pulse">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <p className="text-sm text-muted-foreground">Loading FlowTime...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
-          <SocketInitializer />
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <AuthInitializer>
+            <SocketInitializer />
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-            {/* Protected app routes */}
-            <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="calendar" element={<CalendarPage />} />
-              <Route path="tasks" element={<TasksPage />} />
-              <Route path="habits" element={<HabitsPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="focus" element={<FocusPage />} />
-              <Route path="notifications" element={<NotificationsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="settings/:tab" element={<SettingsPage />} />
-              <Route path="ai" element={<AIPage />} />
-              <Route path="team" element={<TeamPage />} />
-            </Route>
+              {/* Protected app routes */}
+              <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="calendar" element={<CalendarPage />} />
+                <Route path="tasks" element={<TasksPage />} />
+                <Route path="habits" element={<HabitsPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="focus" element={<FocusPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings/:tab" element={<SettingsPage />} />
+                <Route path="ai" element={<AIPage />} />
+                <Route path="team" element={<TeamPage />} />
+              </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <Toaster />
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <Toaster />
+          </AuthInitializer>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

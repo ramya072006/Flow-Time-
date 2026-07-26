@@ -36,12 +36,25 @@ app.use(helmet({
 // CORS
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow any localhost port in development, or the configured client URL
-    if (!origin || origin.startsWith('http://localhost:') || origin === config.clientUrl) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Allow localhost in development
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
     }
+    // Allow configured client URL (set CLIENT_URL on Render to your Netlify domain)
+    if (config.clientUrl && origin === config.clientUrl) {
+      return callback(null, true);
+    }
+    // Allow any Netlify subdomain as fallback
+    if (origin.endsWith('.netlify.app')) {
+      return callback(null, true);
+    }
+    // Allow any Render subdomain (for internal requests)
+    if (origin.endsWith('.onrender.com')) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

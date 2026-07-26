@@ -46,10 +46,12 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
+  initialize: () => Promise<void>;
   updateUser: (data: Partial<User>) => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
 }
@@ -62,6 +64,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
 
       setTokens: (accessToken, refreshToken) => {
         localStorage.setItem('accessToken', accessToken);
@@ -82,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: tokens.refreshToken,
             isAuthenticated: true,
             isLoading: false,
+            isInitialized: true,
           });
         } catch (error) {
           set({ isLoading: false });
@@ -102,6 +106,7 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: tokens.refreshToken,
             isAuthenticated: true,
             isLoading: false,
+            isInitialized: true,
           });
         } catch (error) {
           set({ isLoading: false });
@@ -127,6 +132,46 @@ export const useAuthStore = create<AuthState>()(
           set({ user: response.data.data, isAuthenticated: true });
         } catch {
           set({ user: null, isAuthenticated: false });
+        }
+      },
+
+      // Called once on app startup to restore session after rehydration
+      initialize: async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          set({ isInitialized: true, isAuthenticated: false, user: null });
+          return;
+        }
+        try {
+          const response = await api.get('/auth/me');
+          set({ user: response.data.data, isAuthenticated: true, isInitialized: true });
+        } catch {
+          // Token invalid/expired — try refresh
+          const refreshToken = localStorage.getItem('refreshToken');
+          if (refreshToken) {
+            try {
+              const { default: axios } = await import('axios');
+              const API_URL = import.meta.env.VITE_API_URL || '/api';
+              const res = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+              const { accessToken: newAccess, refreshToken: newRefresh } = res.data.data;
+              localStorage.setItem('accessToken', newAccess);
+              localStorage.setItem('refreshToken', newRefresh);
+              const meRes = await api.get('/auth/me');
+              set({
+                user: meRes.data.data,
+                accessToken: newAccess,
+                refreshToken: newRefresh,
+                isAuthenticated: true,
+                isInitialized: true,
+              });
+              return;
+            } catch {
+              // Refresh also failed — clear everything
+            }
+          }
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          set({ user: null, isAuthenticated: false, accessToken: null, refreshToken: null, isInitialized: true });
         }
       },
 
