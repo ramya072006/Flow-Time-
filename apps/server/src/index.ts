@@ -61,10 +61,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting — stricter for auth endpoints, lenient for general API
+// Rate limiting — stricter for auth endpoints, very lenient for general API during testing
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 30,                   // 30 login/register attempts per IP
+  max: 100,                  // 100 auth attempts per IP
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many auth attempts, please try again later' },
@@ -76,7 +76,7 @@ app.use('/api/auth/forgot-password', authLimiter);
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,                 // generous limit for general API usage
+  max: 5000,                 // 5000 requests per 15 min for testing
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests, please try again later' },
