@@ -6,7 +6,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "seed": "tsx src/scripts/seed.ts",
-    "test": "jest --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@flowtime/types": "*",
