@@ -1,0 +1,26 @@
+apiVersion: v2
+name: flowtime
+description: AI-Powered Productivity Platform - FlowTime
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - productivity
+  - task-management
+  - ai
+  - habits
+home: https://flowtime.app
+sources:
+  - https://github.com/ramya072006/Flow-Time-
+maintainers:
+  - name: Ramya
+    email: ramya@flowtime.app
+dependencies:
+  - name: mongodb
+    version: "14.0.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: mongodb.enabled
+  - name: redis
+    version: "18.0.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
