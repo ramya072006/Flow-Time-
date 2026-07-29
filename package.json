@@ -13,6 +13,7 @@
     "dev": "concurrently \"npm run dev --workspace=apps/server\" \"npm run dev --workspace=apps/client\"",
     "build": "npm run build --workspace=packages/types --if-present && npm run build --workspace=packages/shared --if-present && npm run build --workspace=packages/ui --if-present && npm run build --workspace=apps/server --if-present && npm run build --workspace=apps/client --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:report": "node scripts/generate-test-execution-report.js",
     "lint": "npm run lint --workspaces --if-present",
     "seed": "npm run seed --workspace=apps/server"
   },
