@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=apps/server\" \"npm run dev --workspace=apps/client\"",
-    "build": "npm run build --workspace=packages/types && npm run build --workspace=packages/shared && npm run build --workspace=apps/server && npm run build --workspace=apps/client",
+    "build": "npm run build --workspace=packages/types --if-present && npm run build --workspace=apps/server --if-present && npm run build --workspace=apps/client --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "seed": "npm run seed --workspace=apps/server"
