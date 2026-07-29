@@ -8,10 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    name: Build & Test
+  vulnerability-test:
+    name: Vulnerability Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,34 +24,84 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
-      - name: Build Packages & Apps
-        run: npm run build
+      - name: Run Vulnerability Audit & Security Test
+        run: node scripts/vulnerability-test.js
 
-      - name: Run Tests
-        run: npm run test
-
-  docker-build:
-    name: Docker Build Verification
+  unit-test:
+    name: Unit Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Server Image
-        uses: docker/build-push-action@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          context: .
-          file: apps/server/Dockerfile
-          push: false
-          tags: flowtime-server:latest
+          node-version: 20
+          cache: 'npm'
 
-      - name: Build Client Image
-        uses: docker/build-push-action@v5
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Packages
+        run: npm run build
+
+      - name: Run Unit Tests
+        run: npm run test
+
+  load-test:
+    name: Load Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          context: .
-          file: apps/client/Dockerfile
-          push: false
-          tags: flowtime-client:latest
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run API Load & Throughput Test
+        run: node scripts/load-test.js
+
+  selenium-testing:
+    name: Selenium Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Selenium E2E Suite
+        run: node scripts/selenium-test.js
+
+  appium-testing:
+    name: Appium Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Appium Mobile UI Suite
+        run: node scripts/appium-test.js
